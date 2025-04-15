@@ -1,6 +1,5 @@
 // src/components/ResizableTable.js
-import '../components/ResizableTable';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   Input,
@@ -51,39 +50,49 @@ const ResizableTable = () => {
   const [isMobile] = useMediaQuery('(max-width: 768px)');
   const tableRef = useRef(null);
 
-  const handleMouseDown = (columnName, e) => {
+  const handleResizeStart = (columnName, e) => {
     setIsResizing(columnName);
-    setStartX(e.clientX);
+    const clientX = e.clientX || e.touches[0].clientX;
+    setStartX(clientX);
     setStartWidth(columnWidths[columnName]);
-    document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+    document.body.style.touchAction = 'none';
   };
 
-  const handleMouseMove = (e) => {
+  const handleResizeMove = useCallback((e) => {
     if (!isResizing) return;
     
-    const newWidth = startWidth + (e.clientX - startX);
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    if (!clientX) return;
+    
+    const newWidth = startWidth + (clientX - startX);
     setColumnWidths(prev => ({
       ...prev,
       [isResizing]: Math.max(50, newWidth) // Minimum width of 50px
     }));
-  };
+  }, [isResizing, startWidth, startX]);
 
-  const handleMouseUp = () => {
+  const handleResizeEnd = useCallback(() => {
     setIsResizing(null);
-    document.body.style.cursor = '';
     document.body.style.userSelect = '';
-  };
+    document.body.style.cursor = '';
+    document.body.style.touchAction = '';
+  }, []);
 
   useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('touchmove', handleResizeMove, { passive: false });
+    document.addEventListener('mouseup', handleResizeEnd);
+    document.addEventListener('touchend', handleResizeEnd);
     
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('touchmove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+      document.removeEventListener('touchend', handleResizeEnd);
     };
-  }, [isResizing, startX, startWidth]);
+  }, [handleResizeMove, handleResizeEnd]);
 
   const filteredData = data.filter((item) => {
     const matchesBrand = brandFilter ? item.brand.toLowerCase().includes(brandFilter.toLowerCase()) : true;
@@ -129,6 +138,7 @@ const ResizableTable = () => {
 
       <Box 
         overflowX="auto"
+        ref={tableRef}
         css={{
           '&::-webkit-scrollbar': {
             height: '8px',
@@ -145,7 +155,6 @@ const ResizableTable = () => {
             background: '#555',
           },
         }}
-        ref={tableRef}
       >
         <Table 
           variant="simple" 
@@ -169,6 +178,7 @@ const ResizableTable = () => {
                   color="gray.600"
                   borderBottom="1px solid"
                   borderColor="gray.200"
+                  userSelect="none"
                 >
                   {key.toUpperCase()}
                   <Box
@@ -176,15 +186,17 @@ const ResizableTable = () => {
                     top={0}
                     right={0}
                     bottom={0}
-                    width="4px"
+                    width={isMobile ? '16px' : '12px'}
                     cursor="col-resize"
-                    onMouseDown={(e) => handleMouseDown(key, e)}
+                    onMouseDown={(e) => handleResizeStart(key, e)}
+                    onTouchStart={(e) => handleResizeStart(key, e)}
                     _hover={{
                       backgroundColor: 'gray.300',
                     }}
                     _active={{
                       backgroundColor: 'blue.500',
                     }}
+                    touchAction="none"
                   />
                 </Th>
               ))}
