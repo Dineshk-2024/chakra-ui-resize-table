@@ -1,10 +1,14 @@
 /* src/styles.css */
 .resizable-table-container {
     position: relative;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   }
   
   .resizable-table {
     width: 100%;
+    min-width: 600px; /* Minimum width to maintain table structure */
     border-collapse: collapse;
   }
   
@@ -12,6 +16,12 @@
     position: relative;
     padding: 8px 12px;
     text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #f7fafc;
+  }
+  
+  .resizable-td {
+    padding: 8px 12px;
     border-bottom: 1px solid #e2e8f0;
   }
   
@@ -34,12 +44,50 @@
     background: #3182ce;
   }
   
+  /* Mobile-specific styles */
   @media (max-width: 768px) {
+    .resizable-table-container {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  
     .resizable-table {
       font-size: 14px;
+      min-width: 100%; /* Allow table to shrink on very small screens */
     }
-    
-    .resizable-th, .resizable-td {
+  
+    .resizable-th,
+    .resizable-td {
       padding: 6px 8px;
+      white-space: nowrap; /* Prevent text wrapping */
+    }
+  
+    /* Optional: Add horizontal scroll indicator for mobile */
+    .resizable-table-container::-webkit-scrollbar {
+      height: 6px;
+    }
+  
+    .resizable-table-container::-webkit-scrollbar-thumb {
+      background-color: #cbd5e0;
+      border-radius: 3px;
+    }
+  
+    /* Stack filters vertically on mobile */
+    .filter-container {
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+  
+  /* Very small mobile devices (e.g., iPhone SE) */
+  @media (max-width: 375px) {
+    .resizable-table {
+      font-size: 13px;
+    }
+  
+    .resizable-th,
+    .resizable-td {
+      padding: 4px 6px;
     }
   }
